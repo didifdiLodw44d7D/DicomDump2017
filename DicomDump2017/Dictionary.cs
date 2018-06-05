@@ -122,7 +122,7 @@ namespace DicomDump2017
             tag_element.Add(new TagElement { tag_high = 0x18, tag_low = 0x00, element_high = 0x16, element_low = 0x13 });
             tag_element.Add(new TagElement { tag_high = 0x18, tag_low = 0x00, element_high = 0x00, element_low = 0x51 });
 
-            tag_element.Add(new TagElement { tag_high = 0x20, tag_low = 0x00, element_high = 0x00, element_low = 0x00 });
+            //tag_element.Add(new TagElement { tag_high = 0x20, tag_low = 0x00, element_high = 0x00, element_low = 0x00 });
             tag_element.Add(new TagElement { tag_high = 0x20, tag_low = 0x00, element_high = 0x0E, element_low = 0x00 });
             tag_element.Add(new TagElement { tag_high = 0x20, tag_low = 0x00, element_high = 0x10, element_low = 0x00 });
             tag_element.Add(new TagElement { tag_high = 0x20, tag_low = 0x00, element_high = 0x11, element_low = 0x00 });

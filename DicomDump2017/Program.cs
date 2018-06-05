@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace DicomDump2017
 {
@@ -16,13 +18,18 @@ namespace DicomDump2017
         {
            //string filename = @"C:\Users\tellex\Downloads\CT_JPG_IR6a.dcm";
 
-            string filename = @"mr.dcm";
+            string filename = @"temp.dcm";
 
             //string filename = @"C:\Users\tellex\Downloads\MR_JPG_IR6a.dcm";
 
             //string filename = "MRI.000";
 
             //string filename = @"C:\Users\tellex\Downloads\viewer-master\viewer-master\DICOMDump\DICOMDump\bin\Debug\temp.dcm";
+
+            int bits_allocated, bits_stored, high_bits;
+            int width = 0;
+            int height = 0;
+            int wc, ww;
 
             FileStream file = new FileStream(filename, FileMode.Open);
 
@@ -78,7 +85,29 @@ namespace DicomDump2017
                         Console.WriteLine("ValueLength-->{0}", data_len);
                         */
 
+                        var l = file.Position;
+                        i = (int)l;
+
+                        Console.WriteLine("Hello = " + i);
+
+                        FileInfo info = new FileInfo(filename);
+                        long size = info.Length;
+                        byte[] buffer = new byte[size];
+                        file.Read(buffer, i-6, (int)size-i);
+
+
+                        byte[] bytes = new byte[size - i];
+
+                        Console.WriteLine(bytes.Length.ToString());
+
+                        bufferCopy(bytes, buffer, i, (int)size-i);
+
+                        Console.WriteLine("SIZE = " + size);
+
+                        var bitmap = CreateBitmap(bytes, width, height, (int)592, (int)1184);
+
                         Console.WriteLine();
+                        
 
                         return;
                     }
@@ -96,37 +125,47 @@ namespace DicomDump2017
                     {
                         if ('U' == (char)vr[0] && 'S' == (char)vr[1])
                         {
-                            //２バイト進めて、データ長の２バイトを読み込むための準備をする
-                            file.Seek(2, SeekOrigin.Current);
+                            int a = 0;
 
-                            byte[] data_len = new byte[2];
-
-                            data_len[0] = (byte)file.ReadByte();
-                            data_len[1] = (byte)file.ReadByte();
-
-                            int len = 0;
-
-                            len += data_len[0];
-                            len += data_len[1] * 256;
-
-                            Console.WriteLine("ValueLength-->" + len);
-
-                            byte[] value = new byte[len];
-
-                            for (int j = 0; j < len; j++)
+                            // Rows
+                            if (0x28 == tmp[0] && 0x00 == tmp[1] && 0x10 == tmp[2] && 0x00 == tmp[3])
                             {
-                                //value[j] = (byte)file.ReadByte();
-                                value[j] = (byte)file.ReadByte();
+                                a = GetValueByTagElement(file);
+                                height = a;
                             }
 
-                            int val = value[1] * 256 + value[0];
+                            // Coloumns
+                            if (0x28 == tmp[0] && 0x00 == tmp[1] && 0x11 == tmp[2] && 0x00 == tmp[3])
+                            {
+                                a = GetValueByTagElement(file);
+                                width = a;
+                            }
 
-                            Console.WriteLine(val);
+                            // Bits Allocated
+                            if (0x28 == tmp[0] && 0x00 == tmp[1] && 0x00 == tmp[2] && 0x01 == tmp[3])
+                            {
+                                a = GetValueByTagElement(file);
+                                bits_allocated = a;
+                            }
 
+                            // Bits Stored
+                            if (0x28 == tmp[0] && 0x00 == tmp[1] && 0x01 == tmp[2] && 0x01 == tmp[3])
+                            {
+                                a = GetValueByTagElement(file);
+                                bits_stored = a;
+                            }
+
+                            // High Bits
+                            if (0x28 == tmp[0] && 0x00 == tmp[1] && 0x02 == tmp[2] && 0x01 == tmp[3])
+                            {
+                                a = GetValueByTagElement(file);
+                                high_bits = a;
+                            }
+
+                            Console.WriteLine("A = " + a);
                         }
                         else
                         {
-
                             //２バイト進めて、データ長の２バイトを読み込むための準備をする
                             file.Seek(2, SeekOrigin.Current);
 
@@ -195,6 +234,44 @@ namespace DicomDump2017
             file.Close();
         }
 
+        static int GetValueByTagElement(FileStream file)
+        {
+            //２バイト進めて、データ長の２バイトを読み込むための準備をする
+            file.Seek(2, SeekOrigin.Current);
+
+            byte[] data_len = new byte[2];
+
+            data_len[0] = (byte)file.ReadByte();
+            data_len[1] = (byte)file.ReadByte();
+
+            int len = 0;
+
+            len += data_len[0];
+            len += data_len[1] * 256;
+
+            Console.WriteLine("ValueLength-->" + len);
+
+            byte[] value = new byte[len];
+
+            for (int j = 0; j < len; j++)
+            {
+                //value[j] = (byte)file.ReadByte();
+                value[j] = (byte)file.ReadByte();
+            }
+
+            int val = value[1] * 256 + value[0];
+
+            return val;
+        }
+
+        static void bufferCopy(byte[] obyte, byte[] ibyte, int istart, int length)
+        {
+            for (int k = 0; k < length; k++)
+            {
+                obyte[k] = ibyte[istart + k];
+            }
+        }
+
         /// <summary>
         /// DICOM タグ・エレメントのリストと、ファイルから読み込んだバイト列を比較する。
         /// 合致していたら、その先頭位置がタグ・エレメントの先頭位置になる。
@@ -229,6 +306,43 @@ namespace DicomDump2017
             }
 
             return result;
+        }
+
+        static private Bitmap CreateBitmap(byte[] source, int width, int height, int wc, int ww)
+        {
+            StreamWriter sw = new StreamWriter("test.txt");
+
+            foreach (var s in source)
+            {
+                string str = string.Format("{0}", s.ToString("X2"));
+                sw.Write(str);
+            }
+
+            sw.Close();
+
+            Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            BitmapData bmpData = bitmap.LockBits(new Rectangle(0, 0, width, height),
+                                    ImageLockMode.ReadWrite, bitmap.PixelFormat);
+            IntPtr ptr = bmpData.Scan0;
+            byte[] rgb = new byte[width * height * 3];
+
+            for (int i = 0; i < width * height; i++)
+            {
+                int value = source[2 * i] + source[2 * i + 1] * 256;
+                //value >>= 4;//(bits_stored - high_bits);
+
+                value >>= 2;
+
+                rgb[3 * i] = (byte)value;
+                rgb[3 * i + 1] = (byte)value;
+                rgb[3 * i + 2] = (byte)value;
+            }
+
+            System.Runtime.InteropServices.Marshal.Copy(rgb, 0, ptr, width * height * 3);
+            bitmap.UnlockBits(bmpData);
+            bitmap.Save("sample.bmp");
+
+            return bitmap;
         }
 
         static bool SearchVR(byte b1, byte b2)
@@ -352,12 +466,3 @@ namespace DicomDump2017
         }
     }
 }
-/*
- 
-    明示的・暗黙的VRの切り替え
-        エレメント直後の2バイト
-            VRリストに当て込んで、あたりがなければ
-                5、6バイト目がデータ長の値7、8バイト目は読み飛ばしもしくは0チェックのみ
-    7FE0、0010の例外
-     
-     */

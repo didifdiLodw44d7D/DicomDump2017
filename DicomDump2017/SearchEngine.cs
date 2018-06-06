@@ -98,6 +98,8 @@ namespace DicomDump2017
 
                                 file.Close();
 
+                                //MessageBox.Show(transfer_syntax);
+
                                 return transfer_syntax;
                             }
                             // 転送構文の VR 値が、省略されている場合を前提としていない
@@ -116,8 +118,10 @@ namespace DicomDump2017
             return transfer_syntax;
         }
 
-        public void ParseTagElement()
+        public bool ParseTagElement()
         {
+            bool rtn = false;
+
             FileStream file = new FileStream(filename, FileMode.Open);
 
             int i = 0;
@@ -171,9 +175,7 @@ namespace DicomDump2017
 
                         Console.WriteLine();
 
-                        DebugWrite(bytes);
-
-                        return;
+                        break;
                     }
 
                     // VR リストの中に、バイト配列があるかどうかを検索する
@@ -295,6 +297,10 @@ namespace DicomDump2017
             }
 
             file.Close();
+
+            rtn = true;
+
+            return rtn;
         }
 
         private int GetValueByTagElement(FileStream file)
@@ -394,7 +400,7 @@ namespace DicomDump2017
 
             System.Runtime.InteropServices.Marshal.Copy(rgb, 0, ptr, width * height * 3);
             bitmap.UnlockBits(bmpData);
-            bitmap.Save("sample.bmp");
+            bitmap.Save(@"output\sample.bmp");
 
             return bitmap;
         }
@@ -527,6 +533,38 @@ namespace DicomDump2017
                 sw.WriteLine(s.ToString("X2"));
 
             sw.Close();
+        }
+
+        // 設計が固まったら移動
+        public string ConvertExplicitLittleEndianDicomFile(string input, string output)
+        {
+            //Processオブジェクトを作成
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
+
+            //ComSpec(cmd.exe)のパスを取得して、FileNameプロパティに指定
+            p.StartInfo.FileName = System.Environment.GetEnvironmentVariable("ComSpec");
+            //出力を読み取れるようにする
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardInput = false;
+            //ウィンドウを表示しないようにする
+            p.StartInfo.CreateNoWindow = true;
+            //コマンドラインを指定（"/c"は実行後閉じるために必要）
+            p.StartInfo.Arguments = @"/c dcmtk\bin\dcmdjpeg.exe " + input + " " + output;
+
+            //起動
+            p.Start();
+
+            //出力を読み取る
+            string results = p.StandardOutput.ReadToEnd();
+
+            //プロセス終了まで待機する
+            //WaitForExitはReadToEndの後である必要がある
+            //(親プロセス、子プロセスでブロック防止のため)
+            p.WaitForExit();
+            p.Close();
+
+            return results;
         }
     }
 }

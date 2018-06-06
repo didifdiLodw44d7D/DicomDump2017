@@ -5,3 +5,6 @@ D:\vs2017\DicomDump2017\DicomDump2017\obj\Debug\DicomDump2017.csprojResolveAssem
 D:\vs2017\DicomDump2017\DicomDump2017\obj\Debug\DicomDump2017.exe
 D:\vs2017\DicomDump2017\DicomDump2017\obj\Debug\DicomDump2017.pdb
 D:\vs2017\DicomDump2017\DicomDump2017\obj\Debug\DicomDump2017.csproj.CoreCompileInputs.cache
+D:\DICOM\DicomDump2017.exe.config
+D:\DICOM\DicomDump2017.exe
+D:\DICOM\DicomDump2017.pdb

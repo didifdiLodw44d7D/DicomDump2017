@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.IO;
 using System.Drawing.Imaging;
 using System.Drawing;
 
@@ -13,6 +12,19 @@ namespace DicomDump2017
     class Program
     {
         enum LogAction { start = 0, end = 1, exception = 2 }
+
+        static int GetValue(byte[] data)
+        {
+            int rtn = 0;
+
+            ValueCapsule vc = new ValueCapsule(data);
+
+            vc.CalcValue();
+
+            rtn = vc.GetValue();
+
+            return rtn;
+        }
 
         static void Main(string[] args)
         {
@@ -26,9 +38,11 @@ namespace DicomDump2017
 
                 //filename = @"dcm\MRI.000";
 
-                //filename = @"dcm\MR_LEE_IR6a.dcm";
+                //filename = @"dcm\RF_LEE_IR6a.dcm";
 
                 filename = @"dcm\cr.dcm";
+
+                //filename = @"dcm\mr.dcm";
 
                 var engine = new SearchEngine(filename);
 
@@ -71,6 +85,7 @@ namespace DicomDump2017
                 WriteLog(LogAction.end);
             }
         }
+        
 
         static void WriteLog(LogAction act)
         {

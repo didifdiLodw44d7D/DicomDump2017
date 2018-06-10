@@ -386,10 +386,14 @@ namespace DicomDump2017
 
             for (int i = 0; i < width * height; i++)
             {
-                int value = source[2 * i] + source[2 * i + 1] * 256;
+                int value = CalcPixelData1(source[2 * i], source[2 * i + 1]);
+
+                //int value = CalcPixelData1(source[2 * i], 0x00);
+
+                //int value = source[2 * i] + source[2 * i + 1] * 256;
                 //value >>= 4;//(bits_stored - high_bits);
 
-                value >>= 2;
+                //value >>= 2;
 
                 rgb[3 * i] = (byte)value;
                 rgb[3 * i + 1] = (byte)value;
@@ -565,6 +569,94 @@ namespace DicomDump2017
             p.Close();
 
             return results;
+        }
+
+        public int CalcPixelData1(byte param1, byte param2)
+        {
+            byte[] copy = null;
+
+            int sum = 0;
+
+            if (16 == bits_allocated && 12 == bits_stored)
+            {
+                copy = new byte[bits_allocated];
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int a = (param1 >> i) & 1;
+                    copy[i] = (byte)a;
+                }
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int a = (param2 >> i) & 1;
+                    copy[i + 8] = (byte)a;
+                }
+
+                byte[] b = new byte[bits_stored];
+
+                Buffer.BlockCopy(copy, 4, b, 0, bits_stored);
+
+                int weight = 1;
+
+                for (int i = 0; i < b.Length; i++)
+                {
+                    sum += b[i] * weight;
+                    weight *= 2;
+                }
+            }
+            else if (16 == bits_allocated && 10 == bits_stored)
+            {
+                copy = new byte[bits_allocated];
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int a = (param1 >> i) & 1;
+                    copy[i] = (byte)a;
+                }
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int a = (param2 >> i) & 1;
+                    copy[i + 8] = (byte)a;
+                }
+
+                byte[] b = new byte[bits_stored];
+
+                Buffer.BlockCopy(copy, 4, b, 0, bits_stored);
+
+                int weight = 1;
+
+                for (int i = 0; i < b.Length; i++)
+                {
+                    sum += b[i] * weight;
+                    weight *= 2;
+                }
+            }
+            else if (8 == bits_allocated)
+            {
+                copy = new byte[bits_allocated];
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int a = (param1 >> i) & 1;
+                    copy[i] = (byte)a;
+                }
+
+                byte[] b = new byte[8];
+
+                Buffer.BlockCopy(copy, 0, b, 0, 8);
+
+                int weight = 1;
+
+                for (int i = 0; i < b.Length; i++)
+                {
+                    sum += b[i] * weight;
+                    weight *= 2;
+                }
+            }
+
+            return sum;
         }
     }
 }

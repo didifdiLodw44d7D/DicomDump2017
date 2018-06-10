@@ -6,6 +6,36 @@ using System.Threading.Tasks;
 
 namespace DicomDump2017
 {
+    class ValueCapsule
+    {
+        int num;
+        byte[] capsule;
+        int value;
+
+        public ValueCapsule(byte[] capsule)
+        {
+            this.num = capsule.Length;
+            this.capsule = capsule;
+            this.value = 0;
+        }
+
+        public void CalcValue()
+        {
+            int weight = 1;
+
+            for(int i=0;i<num;i++)
+            {
+                value += capsule[i] * weight;
+                weight *= 2;
+            }
+        }
+
+        public int GetValue()
+        {
+            return value;
+        }
+    }
+
     class TagElement
     {
         public byte tag_high;
